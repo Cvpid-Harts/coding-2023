@@ -3,61 +3,31 @@ using System.Collections.Generic;
 using UnityEngine;
 
 public class PlayerController : MonoBehaviour
-
 {
-
-    public float speed = 10.0f;
-    public float horizontalInput;
-    public float verticalInput;
-    public float xRange = 10.0f;
-    public float zRange = 10.0f;
-    public GameObject projectilePrefab; 
+    private Rigidbody playerRb;
+    public float jumpForce;
+    public float gravityModifier;
+    public bool isOnGround = true;
 
     // Start is called before the first frame update
     void Start()
     {
-        
+        playerRb = GetComponent<Rigidbody>();
+        Physics.gravity *= gravityModifier; 
     }
-
-
 
     // Update is called once per frame
     void Update()
     {
-        horizontalInput = Input.GetAxis("Horizontal");
-        transform.Translate(Vector3.right * horizontalInput * speed * Time.deltaTime);
-
-
-
-        if (transform.position.z < -zRange)
+        if (Input.GetKeyDown(KeyCode.Space)&& isOnGround)
         {
-            transform.position = new Vector3(transform.position.x, transform.position.y, -zRange);
+            playerRb.AddForce(Vector3.up*jumpForce, ForceMode.Impulse);
+            isOnGround = false;
         }
+    }
 
-        if (transform.position.z > zRange)
-        { 
-            transform.position = new Vector3(transform.position.x, transform.position.y, zRange);
-        }
-
-        verticalInput = Input.GetAxis("Vertical");
-        transform.Translate(Vector3.forward * verticalInput * speed * Time.deltaTime);
-
-
-        if (transform.position.z < -zRange)
-        {
-            transform.position = new Vector3(transform.position.x, transform.position.y, -zRange);
-        }
-
-        if (transform.position.z > zRange)
-        { 
-            transform.position = new Vector3(transform.position.x, transform.position.y, zRange);
-    
-        }
-
-        if(Input.GetKeyDown(KeyCode.Space))
-
-        {
-            Instantiate(projectilePrefab, transform.position, projectilePrefab.transform.rotation);
-        }
+    private void OnCollisionEnter(Collision collision)
+    {
+        isOnGround = true;
     }
 }

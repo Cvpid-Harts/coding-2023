@@ -4,32 +4,23 @@ using UnityEngine;
 
 public class SpawnManager : MonoBehaviour
 {
-    private float spawnRangeX;
-    private float spawnPosZ;
-    public GameObject[] animalPrefabs;
+    public GameObject obstaclePrefab;
+    private Vector3 spawnPos = new Vector3(25, 0, 0);
     // Start is called before the first frame update
     void Start()
     {
+        InvokeRepeating("SpawnObstacle", startDelay, repeatRate)
         
     }
 
     // Update is called once per frame
-    
     void Update()
     {
-
-        if (Input.GetKeyDown (KeyCode.S))
-        {
-            SpawnRandomAnimal();
-        }
-
+        
     }
 
-    void SpawnRandomAnimal(){
-        Vector3 spawnPos = new Vector3(Random.Range(-xSpawnRange, xSpawnRange), 0, zSpawnPos);
-        int animalIndex = Random.Range(0, animalPrefabs.Length);
-        Instantiate(animalPrefabs[animalIndex],new Vector3((Random.Range(-20, 20)),0,20),animalPrefabs[animalIndex].transform.rotation);
-
+    void SpawnObstacle()
+    {
+        Instantiate(obstaclePrefab, spawnPos, obstaclePrefab.transform.rotation);
     }
-
 }
