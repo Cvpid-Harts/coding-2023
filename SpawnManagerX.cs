@@ -4,31 +4,68 @@ using UnityEngine;
 
 public class SpawnManagerX : MonoBehaviour
 {
-    public GameObject[] objectPrefabs;
-    private float spawnDelay = 2;
-    private float spawnInterval = 1.5f;
+    public GameObject enemyPrefab;
+    public GameObject powerupPrefab;
 
-    private PlayerControllerX playerControllerScript;
+    private float spawnRangeX = 10;
+    private float spawnZMin = 15; // set min spawn Z
+    private float spawnZMax = 25; // set max spawn Z
 
-    // Start is called before the first frame update
-    void Start()
+    public int enemyCount;
+    public int waveCount = 1;
+
+
+    public GameObject player; 
+
+    // Update is called once per frame
+    void Update()
     {
-        InvokeRepeating("PrawnsObject", spawnDelay, spawnInterval);
-        playerControllerScript = GameObject.Find("Player").GetComponent<PlayerControllerX>();
-    }
+        enemyCount = GameObject.FindGameObjectsWithTag("Enemy").Length;
 
-    // Spawn obstacles
-    void SpawnObjects ()
-    {
-        // Set random spawn location and random object index
-        Vector3 spawnLocation = new Vector3(30, Random.Range(5, 15), 0);
-        int index = Random.Range(0, objectPrefabs.Length);
-
-        // If game is still active, spawn new object
-        if (!playerControllerScript.gameOver)
+        if (enemyCount == 0)
         {
-            Instantiate(objectPrefabs[index], spawnLocation, objectPrefabs[index].transform.rotation);
+            SpawnEnemyWave(waveCount);
         }
 
     }
+
+    // Generate random spawn position for powerups and enemy balls
+    Vector3 GenerateSpawnPosition ()
+    {
+        float xPos = Random.Range(-spawnRangeX, spawnRangeX);
+        float zPos = Random.Range(spawnZMin, spawnZMax);
+        return new Vector3(xPos, 0, zPos);
+    }
+
+
+    void SpawnEnemyWave(int enemiesToSpawn)
+    {
+        Vector3 powerupSpawnOffset = new Vector3(0, 0, -15); // make powerups spawn at player end
+
+        // If no powerups remain, spawn a powerup
+        if (GameObject.FindGameObjectsWithTag("Powerup").Length == 0) // check that there are zero powerups
+        {
+            Instantiate(powerupPrefab, GenerateSpawnPosition() + powerupSpawnOffset, powerupPrefab.transform.rotation);
+        }
+
+        // Spawn number of enemy balls based on wave number
+        for (int i = 0; i < enemiesToSpawn; i++)
+        {
+            Instantiate(enemyPrefab, GenerateSpawnPosition(), enemyPrefab.transform.rotation);
+        }
+
+        waveCount++;
+        ResetPlayerPosition(); // put player back at start
+
+    }
+
+    // Move player back to position in front of own goal
+    void ResetPlayerPosition ()
+    {
+        player.transform.position = new Vector3(0, 1, -7);
+        player.GetComponent<Rigidbody>().velocity = Vector3.zero;
+        player.GetComponent<Rigidbody>().angularVelocity = Vector3.zero;
+
+    }
+
 }

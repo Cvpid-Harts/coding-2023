@@ -4,63 +4,76 @@ using UnityEngine;
 
 public class PlayerControllerX : MonoBehaviour
 {
-    public bool gameOver;
-
-    public float floatForce;
-    private float gravityModifier = 1.5f;
     private Rigidbody playerRb;
+    private float speed = 500;
+    private GameObject focalPoint;
 
-    public ParticleSystem explosionParticle;
-    public ParticleSystem fireworksParticle;
+    public bool hasPowerup;
+    public GameObject powerupIndicator;
+    public int powerUpDuration = 5;
 
-    private AudioSource playerAudio;
-    public AudioClip moneySound;
-    public AudioClip explodeSound;
-
-
-    // Start is called before the first frame update
+    private float normalStrength = 10; // how hard to hit enemy without powerup
+    private float powerupStrength = 25; // how hard to hit enemy with powerup
+    
     void Start()
     {
-        Physics.gravity *= gravityModifier;
-        playerAudio = GetComponent<AudioSource>();
         playerRb = GetComponent<Rigidbody>();
-
-        // Apply a small upward force at the start of the game
-        playerRb.AddForce(Vector3.up * 5, ForceMode.Impulse);
-
+        focalPoint = GameObject.Find("Focal Point");
     }
 
-    // Update is called once per frame
     void Update()
     {
-        // While space is pressed and player is low enough, float up
-        if (Input.GetKey(KeyCode.Space) && !gameOver)
+        // Add force to player in direction of the focal point (and camera)
+        float verticalInput = Input.GetAxis("Vertical");
+        playerRb.AddForce(focalPoint.transform.forward * verticalInput * speed * Time.deltaTime); 
+
+        // Set powerup indicator position to beneath player
+        powerupIndicator.transform.position = transform.position + new Vector3(0, -0.6f, 0);
+
+        StartCoroutine(PowerupCooldown());    
+
+    }
+
+    // If Player collides with powerup, activate powerup
+    private void OnTriggerEnter(Collider other)
+    {
+        if (other.gameObject.CompareTag("Powerup"))
         {
-            playerRb.AddForce(Vector3.up * floatForce);
+            Destroy(other.gameObject);
+            hasPowerup = true;
+            powerupIndicator.SetActive(true);
         }
     }
 
+    // Coroutine to count down powerup duration
+    IEnumerator PowerupCooldown()
+    {
+        yield return new WaitForSeconds(powerUpDuration);
+        hasPowerup = false;
+        powerupIndicator.SetActive(false);
+    }
+
+    // If Player collides with enemy
     private void OnCollisionEnter(Collision other)
     {
-        // if player collides with bomb, explode and set gameOver to true
-        if (other.gameObject.CompareTag("Bomb"))
+        if (other.gameObject.CompareTag("Enemy"))
         {
-            explosionParticle.Play();
-            playerAudio.PlayOneShot(explodeSound, 1.0f);
-            gameOver = true;
-            Debug.Log("Game Over!");
-            Destroy(other.gameObject);
-        } 
+            Rigidbody enemyRigidbody = other.gameObject.GetComponent<Rigidbody>();
+            Vector3 awayFromPlayer = other.gameObject.transform.position - transform.position; 
+           
+            if (hasPowerup) // if have powerup hit enemy with powerup force
+            {
+                enemyRigidbody.AddForce(awayFromPlayer * powerupStrength, ForceMode.Impulse);
+            }
+            else // if no powerup, hit enemy with normal strength 
+            {
+                enemyRigidbody.AddForce(awayFromPlayer * normalStrength, ForceMode.Impulse);
+            }
 
-        // if player collides with money, fireworks
-        else if (other.gameObject.CompareTag("Money"))
-        {
-            fireworksParticle.Play();
-            playerAudio.PlayOneShot(moneySound, 1.0f);
-            Destroy(other.gameObject);
 
         }
-
     }
+
+
 
 }
